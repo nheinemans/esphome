@@ -1,0 +1,65 @@
+esphome:
+  name: meterkast
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret esphome_ha_api_key
+
+ota:
+  password: !secret esphome_ota_key
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Meterkast Fallback Hotspot"
+    password: !secret meterkast_fallback
+
+captive_portal:
+
+sensor:
+  - platform: pulse_counter
+    unit_of_measurement: 'kW'
+    name: 'Power Meter Laadpunt'
+    device_class: 'Power'
+    pin: GPIO13
+    filters:
+      - multiply: 0.075 # (60s/800 pulses per kWh)
+    total:
+      unit_of_measurement: 'kWh'
+      accuracy_decimals: 2
+      icon: mdi:gauge
+      name: 'Energy Meter Laadpunt'
+      filters:
+        - multiply: 0.00125  # (1/800 pulses per kWh)
+      device_class: 'Energy'
+
+  - platform: pulse_counter
+    unit_of_measurement: 'l/min'
+    name: 'Water flow'
+    device_class: water
+    accuracy_decimals: 0
+    pin: GPIO18
+    filters:
+      - multiply: 1 # (60s * 1 pulse per liter)
+    total:
+      unit_of_measurement: 'm³'
+      accuracy_decimals: 3
+      icon: "mdi:water-pump"
+      state_class: total_increasing
+      name: 'Water meter'
+      filters:
+        - multiply: 0.001  # (1000 pulses per m3)
+      device_class: water
